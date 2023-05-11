@@ -73,7 +73,7 @@ static void bootstrap_om_bts(struct gsm_bts *bts)
 
 static void bootstrap_om_trx(struct gsm_bts_trx *trx)
 {
-	LOG_TRX(trx, DNM, LOGL_NOTICE, "bootstrapping OML\n");
+	LOG_TRX(trx, DNM, LOGL_NOTICE, "bootstrapping RSL\n");
 
 	gsm_trx_all_ts_dispatch(trx, TS_EV_OML_READY, NULL);
 }
