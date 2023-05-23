@@ -191,6 +191,23 @@ static int inp_sig_cb(unsigned int subsys, unsigned int signal,
 		LOGP(DNM, LOGL_NOTICE, "Nokia: S_L_INP_TEI_UNKNOWN \n");
 		start_sabm_in_line(isd->line, 1, SAPI_RSL);
 		break;
+	case S_L_INP_LINE_NOALARM:
+		if (strcasecmp(isd->line->driver->name, "DAHDI")
+		 && strcasecmp(isd->line->driver->name, "MISDN_LAPD")
+		 && strcasecmp(isd->line->driver->name, "UNIXSOCKET")
+		 && strcasecmp(isd->line->driver->name, "E1D"))
+			break;
+		start_sabm_in_line(isd->line, 1, SAPI_OML);     /* start only OML */
+		/* TODO: check if the BTS completed a RESET cycle or not !!! */
+		break;
+	case S_L_INP_LINE_ALARM:
+		if (strcasecmp(isd->line->driver->name, "DAHDI")
+		 && strcasecmp(isd->line->driver->name, "MISDN_LAPD")
+		 && strcasecmp(isd->line->driver->name, "UNIXSOCKET")
+		 && strcasecmp(isd->line->driver->name, "E1D"))
+			break;
+		start_sabm_in_line(isd->line, 0, -1);	/* Stop all first */
+		break;
 	}
 
 	return 0;
