@@ -1029,7 +1029,7 @@ void set_real_time(uint8_t * real_time)
 */
 
 static int make_bts_config(struct gsm_bts *bts, uint8_t bts_type, int n_trx, uint8_t * fu_config,
-			   int need_hopping)
+			   int need_hopping, int hopping_type)
 {
 	/* is it an InSite BTS ? */
 	if (bts_type == 0x0E || bts_type == 0x0F || bts_type == 0x10) {	/* TODO */
@@ -1060,9 +1060,22 @@ static int make_bts_config(struct gsm_bts *bts, uint8_t bts_type, int n_trx, uin
 
 	memcpy(fu_config + len, bts_config_2, sizeof(bts_config_2));
 	/* set hopping mode (Baseband and RF hopping work for the MetroSite) */
-	if (need_hopping)
-		fu_config[len + 2 + 1] = 1;	/* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
+	if (need_hopping) {
+		if (hopping_type == 0) {
+			LOGP(DNM, LOGL_NOTICE, "Baseband hopping selected!\n");
+			fu_config[len + 2 + 1] = 1;	/* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
+		}
+		if (hopping_type == 1) {
+			LOGP(DNM, LOGL_NOTICE, "Synthesizer (RF) hopping selected!\n");
+			fu_config[len + 2 + 1] = 2;     /* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
+		}
+		else {
+			LOGP(DNM, LOGL_NOTICE, "No hopping is selected!\n");
+			fu_config[len + 2 + 1] = 0;     /* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
+		}
+	}
 	len += sizeof(bts_config_2);
+
 
 	/* set extended cell radius for each TRX */
 	for (i = 0; i < n_trx; i++) {
@@ -1308,6 +1321,9 @@ static int abis_nm_send_config(struct gsm_bts *bts, uint8_t bts_type)
 	int ret;
 	int hopping = 0;
 	int need_hopping = 0;
+	int hopping_type = 0;
+
+	hopping_type = bts->nokia.nokia_hopping;
 
 	memset(config, 0, sizeof(config));
 
@@ -1334,7 +1350,7 @@ static int abis_nm_send_config(struct gsm_bts *bts, uint8_t bts_type)
 		idx++;
 	}
 
-	ret = make_bts_config(bts, bts_type, idx, config + len, need_hopping);
+	ret = make_bts_config(bts, bts_type, idx, config + len, need_hopping, hopping_type);
 	len += ret;
 
 #if 0				/* debugging */

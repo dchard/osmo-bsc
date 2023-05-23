@@ -464,6 +464,28 @@ DEFUN_ATTR(cfg_bts_nokia_site_bts_reset_timer_cnf,
 
 	return CMD_SUCCESS;
 }
+
+DEFUN_ATTR(cfg_bts_nokia_site_hopping_type,
+           cfg_bts_nokia_site_hopping_type_cmd,
+           "nokia_site nokia_hopping (0|1)",
+           NOKIA_STR
+           "This parameter sets the frequency hopping type for Nokia *Site\n"
+           "0=Baseband hopping, 1=Synthesizer (RF) hopping\n",
+           CMD_ATTR_IMMEDIATE)
+{
+        struct gsm_bts *bts = vty->index;
+
+        if (!is_nokia_bts(bts)) {
+                vty_out(vty, "%% BTS is not of Nokia *Site type%s",
+                        VTY_NEWLINE);
+                return CMD_WARNING;
+        }
+
+        bts->nokia.nokia_hopping = atoi(argv[0]);
+
+        return CMD_SUCCESS;
+}
+
 #define OML_STR	"Organization & Maintenance Link\n"
 #define IPA_STR "A-bis/IP Specific Options\n"
 
@@ -4926,6 +4948,7 @@ int bts_vty_init(void)
 	install_element(BTS_NODE, &cfg_bts_nokia_site_skip_reset_cmd);
 	install_element(BTS_NODE, &cfg_bts_nokia_site_no_loc_rel_cnf_cmd);
 	install_element(BTS_NODE, &cfg_bts_nokia_site_bts_reset_timer_cnf_cmd);
+	install_element(BTS_NODE, &cfg_bts_nokia_site_hopping_type_cmd);
 	install_element(BTS_NODE, &cfg_bts_stream_id_cmd);
 	install_element(BTS_NODE, &cfg_bts_deprecated_stream_id_cmd);
 	install_element(BTS_NODE, &cfg_bts_oml_e1_cmd);
