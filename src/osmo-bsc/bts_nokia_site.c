@@ -159,6 +159,7 @@ static int inp_sig_cb(unsigned int subsys, unsigned int signal,
 
 	switch (signal) {
 	case S_L_INP_LINE_INIT:
+		LOGP(DNM, LOGL_NOTICE, "Nokia: S_L_INP_LINE_INIT: start_sabm_in_line (OML) \n");
 		start_sabm_in_line(isd->line, 1, SAPI_OML);	/* start only OML */
 		break;
 	case S_L_INP_TEI_DN:
@@ -169,9 +170,12 @@ static int inp_sig_cb(unsigned int subsys, unsigned int signal,
 			if (isd->trx->bts->type != GSM_BTS_TYPE_NOKIA_SITE)
 				break;
 
-			if (isd->tei == isd->trx->bts->oml_tei)
+			if (isd->tei == isd->trx->bts->oml_tei) {
+				LOGP(DNM, LOGL_NOTICE, "Nokia: S_L_INP_TEI_UP: bootstrap_om_bts \n");
 				bootstrap_om_bts(isd->trx->bts);
+			}
 			else
+				LOGP(DNM, LOGL_NOTICE, "Nokia: S_L_INP_TEI_UP: bootstrap_om_trx \n");
 				bootstrap_om_trx(isd->trx);
 			break;
 		default:
@@ -183,6 +187,7 @@ static int inp_sig_cb(unsigned int subsys, unsigned int signal,
 		 * seem to know, likely that we (the BSC) stopped working
 		 * and lost our local states. However, the BTS is already
 		 * configured, we try to take over the RSL links. */
+		LOGP(DNM, LOGL_NOTICE, "Nokia: S_L_INP_TEI_UNKNOWN \n");
 		start_sabm_in_line(isd->line, 1, SAPI_RSL);
 		break;
 	}
@@ -1516,11 +1521,13 @@ static void reset_timer_cb(void *_bts)
 	case RESET_T_NONE:				/* shouldn't happen */
 		break;
 	case RESET_T_STOP_LAPD:
+		LOG_BTS(bts, DLINP, LOGL_ERROR, "Nokia: RESET_T_STOP_LAPD called \n");
 		start_sabm_in_line(line, 0, -1);	/* stop all first */
 		bts->nokia.wait_reset = RESET_T_RESTART_LAPD;
 		osmo_timer_schedule(&bts->nokia.reset_timer, bts->nokia.bts_reset_timer_cnf, 0);
 		break;
 	case RESET_T_RESTART_LAPD:
+		LOG_BTS(bts, DLINP, LOGL_ERROR, "Nokia: RESET_T_RESTART_LAPD called \n");
 		bts->nokia.wait_reset = 0;
 		start_sabm_in_line(line, 0, -1);	/* stop all first */
 		start_sabm_in_line(line, 1, SAPI_OML);	/* start only OML */
@@ -1614,6 +1621,7 @@ static int abis_nm_rcvmsg_fom(struct msgb *mb)
 		/* ACK for reset message ? */
 		if (!bts->nokia.did_reset) {
 			bts->nokia.did_reset = 1;
+			LOG_BTS(bts, DNM, LOGL_ERROR, "Nokia: bts->nokia.did_reset is set! \n");
 
 			/*
 			   TODO: For the InSite processing the received data is
@@ -1634,6 +1642,7 @@ static int abis_nm_rcvmsg_fom(struct msgb *mb)
 			bts->nokia.wait_reset = RESET_T_STOP_LAPD;
 			osmo_timer_setup(&bts->nokia.reset_timer, reset_timer_cb, bts);
 			osmo_timer_schedule(&bts->nokia.reset_timer, 0, 0);
+ 			
 		}
 		break;
 	case NOKIA_MSG_STATE_CHANGED:
@@ -1643,24 +1652,24 @@ static int abis_nm_rcvmsg_fom(struct msgb *mb)
 	case NOKIA_MSG_CONF_COMPLETE:
 		/* send ACK */
 		abis_nm_ack(bts, ref);
-                if (bts->nokia.configured != 0) {
-                        /* start TRX  (RSL link) */
+        if (bts->nokia.configured != 0) {
+                 /* start TRX  (RSL link) */
 
-                        struct gsm_e1_subslot *e1_link =
-                                        &sign_link->trx->rsl_e1_link;
-                        struct e1inp_line *line;
+                 struct gsm_e1_subslot *e1_link =
+                                 &sign_link->trx->rsl_e1_link;
+                 struct e1inp_line *line;
 
-                        bts->nokia.configured = 0;
+                 bts->nokia.configured = 0;
 
-                        /* RSL Link */
-                        line = e1inp_line_find(e1_link->e1_nr);
-                        if (!line) {
-                                LOG_BTS(bts, DLINP, LOGL_ERROR, "RSL link referring to "
-                                        "non-existing E1 line %u\n", e1_link->e1_nr);
-                                return -ENOMEM;
-                        }
-                        /* start TRX */
-                        start_sabm_in_line(line, 1, SAPI_RSL);  /* start only RSL */
+                 /* RSL Link */
+                 line = e1inp_line_find(e1_link->e1_nr);
+                 if (!line) {
+                         LOG_BTS(bts, DLINP, LOGL_ERROR, "RSL link referring to "
+                                 "non-existing E1 line %u\n", e1_link->e1_nr);
+                         return -ENOMEM;
+                 }
+                 /* start TRX */
+                 start_sabm_in_line(line, 1, SAPI_RSL);  /* start only RSL */
 		}
 		/* fake 12.21 OM */
 		nokia_abis_nm_fake_1221_ok(bts);
