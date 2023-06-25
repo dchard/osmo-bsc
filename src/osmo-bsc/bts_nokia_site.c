@@ -1061,17 +1061,19 @@ static int make_bts_config(struct gsm_bts *bts, uint8_t bts_type, int n_trx, uin
 	memcpy(fu_config + len, bts_config_2, sizeof(bts_config_2));
 	/* set hopping mode (Baseband and RF hopping work for the MetroSite) */
 	if (need_hopping) {
-		if (hopping_type == 0) {
-			LOGP(DNM, LOGL_NOTICE, "Baseband hopping selected!\n");
-			fu_config[len + 2 + 1] = 1;	/* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
-		}
-		if (hopping_type == 1) {
-			LOGP(DNM, LOGL_NOTICE, "Synthesizer (RF) hopping selected!\n");
-			fu_config[len + 2 + 1] = 2;     /* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
-		}
-		else {
-			LOGP(DNM, LOGL_NOTICE, "No hopping is selected!\n");
-			fu_config[len + 2 + 1] = 0;     /* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
+		switch (hopping_type) {
+			case 0:
+				LOGP(DNM, LOGL_NOTICE, "Baseband hopping selected!\n");
+				fu_config[len + 2 + 1] = 1;	/* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
+				break;
+			case 1:
+				LOGP(DNM, LOGL_NOTICE, "Synthesizer (RF) hopping selected!\n");
+				fu_config[len + 2 + 1] = 2;     /* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
+				break;
+			default:
+				LOGP(DNM, LOGL_NOTICE, "No hopping is selected!\n");
+				fu_config[len + 2 + 1] = 0;     /* 0: no hopping, 1: Baseband hopping, 2: RF hopping */
+				break;
 		}
 	}
 	len += sizeof(bts_config_2);
