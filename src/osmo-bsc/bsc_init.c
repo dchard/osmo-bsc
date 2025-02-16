@@ -52,8 +52,13 @@ struct gsm_network *bsc_gsmnet;
 int bsc_shutdown_net(struct gsm_network *net)
 {
 	struct gsm_bts *bts;
+	struct gsm_bts_trx *trx;
 
 	llist_for_each_entry(bts, &net->bts_list, list) {
+		llist_for_each_entry(trx, &bts->trx_list, list) {
+			LOGP(DNM, LOGL_NOTICE, "shutting down OML for TRX%u\n", trx->nr + 1);
+			osmo_signal_dispatch(SS_L_GLOBAL, S_GLOBAL_BTS_CLOSE_OM_TRX, bts);
+		}
 		LOGP(DNM, LOGL_NOTICE, "shutting down OML for BTS %u\n", bts->nr);
 		osmo_signal_dispatch(SS_L_GLOBAL, S_GLOBAL_BTS_CLOSE_OM, bts);
 	}

@@ -110,6 +110,7 @@ enum signal_ipaccess {
 
 enum signal_global {
 	S_GLOBAL_BTS_CLOSE_OM,
+	S_GLOBAL_BTS_CLOSE_OM_TRX,
 };
 
 /* SS_RF signals */
