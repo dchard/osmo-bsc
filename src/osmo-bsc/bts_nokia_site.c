@@ -79,8 +79,8 @@ static int shutdown_om_trx(struct gsm_bts *bts)
         llist_for_each_entry(trx, &bts->trx_list, list) {
                 /* lock all TRXs */
                 abis_nm_cha_adm_trx_lock(bts, trx->nr + 1, ref);
-				ref+=2;
-		}
+					ref+=2;
+	}
         /* TODO !? */
         return 0;
 }
